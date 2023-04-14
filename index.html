@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Image</title>
+    <style>
+        body: {
+            background-color: black
+        }
+
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+    </style>
+</head>
+
+<body>
+    <img id="image" alt="API Image">
+    <script>
+        const img = document.getElementById('image');
+
+        img.addEventListener('click', function () {
+            if (image.requestFullscreen) {
+                image.requestFullscreen();
+            } else if (image.webkitRequestFullscreen) {
+                image.webkitRequestFullscreen();
+            }
+        });
+
+
+        // Replace this with your API URL
+        const apiUrl = 'https://7iwwtnbtxomprzu2jb4i3osola0dyflt.lambda-url.us-east-1.on.aws/';
+
+        function updateImage() {
+            // Make a GET request to the API
+            fetch(apiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    // Set the image src attribute to the URL from the API response
+                    img.src = data.message.image_url;
+                    if (img.requestFullscreen) {
+                        img.requestFullscreen();
+                    } else if (img.webkitRequestFullscreen) {
+                        img.webkitRequestFullscreen();
+                    }
+                })
+                .catch(error => console.error(error));
+        }
+
+        setInterval(updateImage, 3000);
+    </script>
+</body>
+
+</html>
