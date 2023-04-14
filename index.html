@@ -29,8 +29,13 @@
         });
 
 
-        // Replace this with your API URL
-        const apiUrl = 'https://7iwwtnbtxomprzu2jb4i3osola0dyflt.lambda-url.us-east-1.on.aws/';
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        // Construct the API endpoint URL with query strings for the viewport width and height
+        const apiUrl = `https://7iwwtnbtxomprzu2jb4i3osola0dyflt.lambda-url.us-east-1.on.aws?viewportWidth=${encodeURIComponent(viewportWidth)}&viewportHeight=${encodeURIComponent(viewportHeight)}`;
+
+        // const apiUrl = 'https://7iwwtnbtxomprzu2jb4i3osola0dyflt.lambda-url.us-east-1.on.aws/';
 
         // request a wake lock
         if ('wakeLock' in navigator) {
@@ -58,6 +63,18 @@
                 })
                 .catch(error => console.error(error));
         }
+
+
+        fetch('https://example.com/api', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                viewportWidth,
+                viewportHeight
+            })
+        })
 
         updateImage();
 
