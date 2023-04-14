@@ -33,6 +33,17 @@
         // Replace this with your API URL
         const apiUrl = 'https://7iwwtnbtxomprzu2jb4i3osola0dyflt.lambda-url.us-east-1.on.aws/';
 
+        // request a wake lock
+        if ('wakeLock' in navigator) {
+            navigator.wakeLock.request('screen').then(() => {
+                console.log('Wake lock activated');
+            }).catch((error) => {
+                console.error('Wake lock error:', error);
+            });
+        } else {
+            console.warn('Wake lock API not supported');
+        }
+
         function updateImage() {
             // Make a GET request to the API
             fetch(apiUrl)
