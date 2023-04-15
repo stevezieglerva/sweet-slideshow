@@ -35,7 +35,6 @@
         // Construct the API endpoint URL with query strings for the viewport width and height
         const apiUrl = `https://7iwwtnbtxomprzu2jb4i3osola0dyflt.lambda-url.us-east-1.on.aws?viewportWidth=${encodeURIComponent(viewportWidth)}&viewportHeight=${encodeURIComponent(viewportHeight)}`;
 
-        // const apiUrl = 'https://7iwwtnbtxomprzu2jb4i3osola0dyflt.lambda-url.us-east-1.on.aws/';
 
         // request a wake lock
         if ('wakeLock' in navigator) {
@@ -78,7 +77,7 @@
 
         updateImage();
 
-        setInterval(updateImage, 15000);
+        setInterval(updateImage, 10000);
     </script>
 </body>
 
