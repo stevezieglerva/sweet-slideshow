@@ -4,7 +4,7 @@
 <head>
     <title>Sweet Shuffle</title>
     <style>
-        body: {
+        body {
             background-color: black
         }
 
@@ -32,8 +32,14 @@
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
 
+        // Get the current URL
+        const url = window.location.href;
+
+        // Extract the query string from the URL
+        const queryString = url.split('?')[1];
+
         // Construct the API endpoint URL with query strings for the viewport width and height
-        const apiUrl = `https://7iwwtnbtxomprzu2jb4i3osola0dyflt.lambda-url.us-east-1.on.aws?viewportWidth=${encodeURIComponent(viewportWidth)}&viewportHeight=${encodeURIComponent(viewportHeight)}`;
+        const apiUrl = `https://7iwwtnbtxomprzu2jb4i3osola0dyflt.lambda-url.us-east-1.on.aws?viewportWidth=${encodeURIComponent(viewportWidth)}&viewportHeight=${encodeURIComponent(viewportHeight)}&${queryString}`;
 
 
         // request a wake lock
