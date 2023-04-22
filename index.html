@@ -44,11 +44,12 @@
     <script>
         const img = document.getElementById('image');
 
-        img.addEventListener('click', function () {
-            if (image.requestFullscreen) {
-                image.requestFullscreen();
-            } else if (image.webkitRequestFullscreen) {
-                image.webkitRequestFullscreen();
+        const container = document.getElementById('container');
+        container.addEventListener('click', function () {
+            if (container.requestFullscreen) {
+                container.requestFullscreen();
+            } else if (container.webkitRequestFullscreen) {
+                container.webkitRequestFullscreen();
             }
         });
 
@@ -84,11 +85,7 @@
                 .then(data => {
                     // Set the image src attribute to the URL from the API response
                     img.src = data.message.image_url;
-                    if (img.requestFullscreen) {
-                        img.requestFullscreen();
-                    } else if (img.webkitRequestFullscreen) {
-                        img.webkitRequestFullscreen();
-                    }
+
                 })
                 .catch(error => console.error(error));
         }
