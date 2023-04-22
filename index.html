@@ -13,11 +13,34 @@
             height: 100%;
             color: white
         }
+
+        .container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .clock {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            font-size: 20px;
+            color: #fff;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 5px;
+            border-radius: 5px;
+            font-weight: bold;
+            text-align: center;
+        }
     </style>
 </head>
 
 <body>
-    <img id="image" alt="Loading image ...">
+    <div class="clock-container">
+
+        <img id="image" alt="Loading image ...">
+        <div class="clock"></div>
+    </div>
     <script>
         const img = document.getElementById('image');
 
@@ -85,6 +108,16 @@
         updateImage();
 
         setInterval(updateImage, 10000);
+
+        function displayTime() {
+            const clock = document.querySelector('.clock');
+            const date = new Date();
+            const time = date.toLocaleTimeString([], { weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+            clock.textContent = time;
+        }
+        displayTime();
+
+        setInterval(displayTime, 60000);
     </script>
 </body>
 
