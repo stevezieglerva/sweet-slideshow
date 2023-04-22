@@ -64,6 +64,14 @@
         const queryString = url.split('?')[1];
 
         // Construct the API endpoint URL with query strings for the viewport width and height
+        let apiKey;
+        if (queryString) {
+            apiKey = queryString.split('=')[1];
+        }
+        if (!apiKey) {
+            alert('API key is missing from the query string!');
+        }
+
         const apiUrl = `https://7iwwtnbtxomprzu2jb4i3osola0dyflt.lambda-url.us-east-1.on.aws?viewportWidth=${encodeURIComponent(viewportWidth)}&viewportHeight=${encodeURIComponent(viewportHeight)}&${queryString}`;
 
 
@@ -111,7 +119,7 @@
             const clock = document.querySelector('.clock');
             const date = new Date();
             const time = date.toLocaleTimeString([], { weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-            clock.textContent = time + " | " + label;
+            clock.textContent = time + " -<>- " + label;
         }
         displayTime("waiting");
 
