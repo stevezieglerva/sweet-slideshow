@@ -85,6 +85,7 @@
                 .then(data => {
                     // Set the image src attribute to the URL from the API response
                     img.src = data.message.image_url;
+                    displayTime(data.message.date_taken);
 
                 })
                 .catch(error => console.error(error));
@@ -106,13 +107,13 @@
 
         setInterval(updateImage, 10000);
 
-        function displayTime() {
+        function displayTime(label) {
             const clock = document.querySelector('.clock');
             const date = new Date();
             const time = date.toLocaleTimeString([], { weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-            clock.textContent = time;
+            clock.textContent = time + " | " + label;
         }
-        displayTime();
+        displayTime("waiting");
 
         setInterval(displayTime, 60000);
     </script>
