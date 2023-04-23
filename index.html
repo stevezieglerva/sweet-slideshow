@@ -118,8 +118,8 @@
         function displayTime(label) {
             const clock = document.querySelector('.clock');
             const date = new Date();
-            const time = date.toLocaleTimeString([], { weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-            clock.textContent = time + " -<>- " + label;
+            const time = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+            clock.textContent = label + " | " + time;
         }
         displayTime("waiting");
 
