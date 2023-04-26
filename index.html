@@ -27,7 +27,7 @@
             font-size: calc(2px + 3vh);
             color: #fff;
             background-color: rgba(0, 0, 0, 0.5);
-            padding: 5px;
+            padding: 10px;
             font-weight: bold;
             text-align: center;
         }
@@ -112,7 +112,22 @@
 
         updateImage();
 
-        setInterval(updateImage, 10000);
+        const queryParams = new URLSearchParams(window.location.search);
+        const timingQueryParam = queryParams.get('timing');
+        let updateInterval;
+
+        if (timingQueryParam === 'fast') {
+            updateInterval = 15000;
+        } else if (timingQueryParam === 'slow') {
+            updateInterval = 60000;
+        } else {
+            updateInterval = 15000;
+        }
+        console.log(`Selected update interval: ${updateInterval}ms`);
+        setInterval(updateImage, updateInterval);
+
+
+
 
         function displayTime(label) {
             const clock = document.querySelector('.clock');
