@@ -24,7 +24,7 @@
             bottom: 0;
             left: 0;
             width: 100%;
-            font-size: calc(10px + 3vh);
+            font-size: calc(10px + 6vh);
             color: #fff;
             background-color: rgba(0, 0, 0, 0.5);
             padding: 10px;
@@ -55,11 +55,11 @@
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
         const queryParams = new URLSearchParams(window.location.search);
-        const apiKey = queryParams.get('apiKey');
+        const apiKey = queryParams.get('apiKey') || '';
         const mode = queryParams.get('mode');
 
-        if (!apiKey) {
-            alert('API key is missing from the query string!');
+        if (!apiKey.trim()) {
+            console.error('API key is missing from the query string!');
         }
 
         if (mode === 'clock') {
@@ -90,15 +90,18 @@
 
         updateImage();
 
-        let updateInterval = queryParams.get('timing') === 'slow' ? 60000 : 15000;
+        let updateInterval = queryParams.get('timing') === 'slow' || mode === 'clock' ? 60000 : 15000;
         console.log(`Selected update interval: ${updateInterval}ms`);
         setInterval(updateImage, updateInterval);
 
         function displayTime() {
             const date = new Date();
             if (mode === 'clock') {
-                const options = { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true };
-                clock.textContent = date.toLocaleDateString('en-US', options).replace(',', '').replace(',', ' | ');
+                const day = date.toLocaleString('en-US', { weekday: 'short' });
+                const month = date.toLocaleString('en-US', { month: 'short' });
+                const dayOfMonth = date.getDate();
+                const time = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+                clock.textContent = `${day} ${month} ${dayOfMonth} | ${time}`;
             } else {
                 const time = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
                 clock.textContent = "Updated | " + time;
