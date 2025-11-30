@@ -235,6 +235,10 @@
 
                     // Update navigation controls
                     updateNavigationControls();
+
+                    // Ensure navigation arrows are hidden when a new image is fetched
+                    leftArrow.classList.remove('nav-arrow-visible');
+                    rightArrow.classList.remove('nav-arrow-visible');
                 })
                 .catch(error => console.error(error));
         }
