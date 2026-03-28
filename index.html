@@ -16,6 +16,17 @@
             color: white;
         }
 
+        #image-wrapper {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+
+        .two-photos #image-wrapper img {
+            width: 50%;
+            object-fit: cover;
+        }
+
         .container {
             position: relative;
             display: inline-block;
@@ -92,11 +103,15 @@
 
 <body>
     <div id="container" class="clock-container">
-        <img id="image" alt="Loading image ...">
+        <div id="image-wrapper">
+            <img id="image" alt="Loading image ...">
+            <img id="image2" alt="Loading image ..." style="display:none;">
+        </div>
         <div class="clock"></div>
     </div>
     <script>
         const img = document.getElementById('image');
+        const img2 = document.getElementById('image2');
         const clock = document.querySelector('.clock');
         const container = document.getElementById('container');
 
@@ -128,9 +143,16 @@
         const queryParams = new URLSearchParams(window.location.search);
         const apiKey = queryParams.get('apiKey') || '';
         const mode = queryParams.get('mode');
+        const photoCount = parseInt(queryParams.get('photos') || '1', 10);
+        const isTwoPhotos = photoCount === 2;
 
         if (!apiKey.trim()) {
             console.error('API key is missing from the query string!');
+        }
+
+        if (isTwoPhotos) {
+            container.classList.add('two-photos');
+            img2.style.display = 'block';
         }
 
         if (mode === 'clock') {
@@ -187,7 +209,12 @@
 
             // Update image and timestamp
             img.src = historyItem.imageUrl;
-            displayTime(historyItem.dateTaken);
+            if (isTwoPhotos && historyItem.imageUrl2) {
+                img2.src = historyItem.imageUrl2;
+                displayTime(historyItem.dateTaken, historyItem.dateTaken2);
+            } else {
+                displayTime(historyItem.dateTaken);
+            }
 
             // Show/hide navigation arrows based on position
             updateNavigationControls();
@@ -214,36 +241,58 @@
         }
 
         function updateImage() {
-            fetch(apiUrl)
-                .then(response => response.json())
-                .then(data => {
-                    // Create new image data object
-                    const newImage = {
-                        imageUrl: data.message.image_url,
-                        dateTaken: data.message.date_taken
-                    };
+            if (isTwoPhotos) {
+                Promise.all([fetch(apiUrl), fetch(apiUrl)])
+                    .then(([res1, res2]) => Promise.all([res1.json(), res2.json()]))
+                    .then(([data1, data2]) => {
+                        const newImage = {
+                            imageUrl: data1.message.image_url,
+                            imageUrl2: data2.message.image_url,
+                            dateTaken: data1.message.date_taken,
+                            dateTaken2: data2.message.date_taken
+                        };
 
-                    // Add to history and manage array size
-                    imageHistory.push(newImage);
-                    if (imageHistory.length > MAX_HISTORY) {
-                        imageHistory.shift();
-                    }
+                        imageHistory.push(newImage);
+                        if (imageHistory.length > MAX_HISTORY) {
+                            imageHistory.shift();
+                        }
 
-                    // Update current index to point to the newest image
-                    currentHistoryIndex = imageHistory.length - 1;
+                        currentHistoryIndex = imageHistory.length - 1;
 
-                    // Display the new image
-                    img.src = newImage.imageUrl;
-                    displayTime(newImage.dateTaken);
+                        img.src = newImage.imageUrl;
+                        img2.src = newImage.imageUrl2;
+                        displayTime(newImage.dateTaken, newImage.dateTaken2);
 
-                    // Update navigation controls
-                    updateNavigationControls();
+                        updateNavigationControls();
+                        leftArrow.classList.remove('nav-arrow-visible');
+                        rightArrow.classList.remove('nav-arrow-visible');
+                    })
+                    .catch(error => console.error(error));
+            } else {
+                fetch(apiUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        const newImage = {
+                            imageUrl: data.message.image_url,
+                            dateTaken: data.message.date_taken
+                        };
 
-                    // Ensure navigation arrows are hidden when a new image is fetched
-                    leftArrow.classList.remove('nav-arrow-visible');
-                    rightArrow.classList.remove('nav-arrow-visible');
-                })
-                .catch(error => console.error(error));
+                        imageHistory.push(newImage);
+                        if (imageHistory.length > MAX_HISTORY) {
+                            imageHistory.shift();
+                        }
+
+                        currentHistoryIndex = imageHistory.length - 1;
+
+                        img.src = newImage.imageUrl;
+                        displayTime(newImage.dateTaken);
+
+                        updateNavigationControls();
+                        leftArrow.classList.remove('nav-arrow-visible');
+                        rightArrow.classList.remove('nav-arrow-visible');
+                    })
+                    .catch(error => console.error(error));
+            }
         }
 
         updateImage();
@@ -264,9 +313,13 @@
         autoAdvanceTimer = setInterval(updateImage, updateInterval);
 
         let lastLabel = '';
-        function displayTime(label) {
+        let lastLabel2 = '';
+        function displayTime(label, label2) {
             if (label !== undefined) {
                 lastLabel = label;
+            }
+            if (label2 !== undefined) {
+                lastLabel2 = label2;
             }
             const date = new Date();
             if (mode === 'clock') {
@@ -275,6 +328,9 @@
                 const dayOfMonth = date.getDate();
                 const time = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
                 clock.innerHTML = `${day} ${month} ${dayOfMonth} <br/> ${time}`;
+            } else if (isTwoPhotos) {
+                const time = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+                clock.textContent = lastLabel + " | " + time + " | " + lastLabel2;
             } else {
                 const time = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
                 clock.textContent = lastLabel + " | " + time;
