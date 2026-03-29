@@ -322,17 +322,17 @@
                 lastLabel2 = label2;
             }
             const date = new Date();
+            const time = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
             if (mode === 'clock') {
                 const day = date.toLocaleString('en-US', { weekday: 'short' });
                 const month = date.toLocaleString('en-US', { month: 'short' });
                 const dayOfMonth = date.getDate();
-                const time = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-                clock.innerHTML = `${day} ${month} ${dayOfMonth} <br/> ${time}`;
-            } else if (isTwoPhotos) {
-                const time = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
-                clock.textContent = lastLabel + " | " + time + " | " + lastLabel2;
+                const clockTime = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+                clock.innerHTML = `${day} ${month} ${dayOfMonth} <br/> ${clockTime}`;
+            } else if (lastLabel.includes(' & ')) {
+                const parts = lastLabel.split(' & ');
+                clock.textContent = parts[0] + " | " + time + " | " + parts[1];
             } else {
-                const time = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
                 clock.textContent = lastLabel + " | " + time;
             }
         }
