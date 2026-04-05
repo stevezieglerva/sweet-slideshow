@@ -46,6 +46,15 @@
             text-align: center;
         }
 
+        .banner-segment {
+            position: absolute;
+            transform: translateX(-50%);
+        }
+
+        .banner-segment:nth-child(1) { left: 25%; }
+        .banner-segment:nth-child(2) { left: 50%; }
+        .banner-segment:nth-child(3) { left: 75%; }
+
         /* Navigation arrow styling */
         .nav-arrow {
             position: absolute;
@@ -331,7 +340,7 @@
                 clock.innerHTML = `${day} ${month} ${dayOfMonth} <br/> ${clockTime}`;
             } else if (lastLabel.includes(' & ')) {
                 const parts = lastLabel.split(' & ');
-                clock.textContent = parts[0] + " | " + time + " | " + parts[1];
+                clock.innerHTML = `&nbsp;<span class="banner-segment">${parts[0]}</span><span class="banner-segment">${time}</span><span class="banner-segment">${parts[1]}</span>`;
             } else {
                 clock.textContent = lastLabel + " | " + time;
             }
