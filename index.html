@@ -5,6 +5,9 @@
     <title>Sweet Shuffle</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,700,0,0&family=Roboto:wght@700&display=swap" rel="stylesheet">
     <style>
         body {
             background-color: black;
@@ -44,6 +47,56 @@
             padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
             font-weight: bold;
             text-align: center;
+        }
+
+        .frame-status {
+            display: none;
+        }
+
+        .frame-mode .frame-status {
+            display: flex;
+            position: absolute;
+            top: 2.5vh;
+            right: 2vw;
+            z-index: 2;
+            flex-direction: column;
+            align-items: flex-end;
+            color: #fff;
+            font-family: 'Roboto', Arial, sans-serif;
+            font-weight: 700;
+            text-align: right;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.8);
+            pointer-events: none;
+        }
+
+        .frame-time {
+            font-size: calc(20px + 8vh);
+            line-height: 0.95;
+            white-space: nowrap;
+        }
+
+        .frame-details {
+            display: flex;
+            align-items: center;
+            gap: 0.35em;
+            margin-top: 0.25em;
+            font-size: calc(12px + 2.5vh);
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        .weather-icon {
+            font-family: 'Material Symbols Rounded';
+            font-size: 1.15em;
+            font-variation-settings: 'FILL' 1, 'wght' 700, 'GRAD' 0, 'opsz' 32;
+        }
+
+        .frame-mode .clock {
+            font-family: 'Roboto', Arial, sans-serif;
+        }
+
+        .frame-mode .banner-segment:nth-child(2) {
+            left: 75%;
         }
 
         .banner-segment {
@@ -117,12 +170,24 @@
             <img id="image2" alt="Loading image ..." style="display:none;">
         </div>
         <div class="clock"></div>
+        <div class="frame-status" aria-label="Current weather and time">
+            <div class="frame-time"></div>
+            <div class="frame-details">
+                <span class="frame-date"></span>
+                <span class="weather-icon" aria-hidden="true"></span>
+                <span class="frame-temperature"></span>
+            </div>
+        </div>
     </div>
     <script>
         const img = document.getElementById('image');
         const img2 = document.getElementById('image2');
         const clock = document.querySelector('.clock');
         const container = document.getElementById('container');
+        const frameTime = document.querySelector('.frame-time');
+        const frameDate = document.querySelector('.frame-date');
+        const weatherIcon = document.querySelector('.weather-icon');
+        const frameTemperature = document.querySelector('.frame-temperature');
 
         // Image history management
         const imageHistory = [];
@@ -154,6 +219,7 @@
         const mode = queryParams.get('mode');
         const photoCount = parseInt(queryParams.get('photos') || '1', 10);
         const isTwoPhotos = photoCount === 2;
+        const isFrameMode = mode === 'frame';
 
         if (!apiKey.trim()) {
             console.error('API key is missing from the query string!');
@@ -166,6 +232,10 @@
 
         if (mode === 'clock') {
             clock.style.fontSize = 'calc(20px + 6vh)'; // Increase font size when mode is clock
+        }
+
+        if (isFrameMode) {
+            container.classList.add('frame-mode');
         }
 
         const apiUrl = `https://7iwwtnbtxomprzu2jb4i3osola0dyflt.lambda-url.us-east-1.on.aws?viewportWidth=${encodeURIComponent(viewportWidth)}&viewportHeight=${encodeURIComponent(viewportHeight)}&${queryParams}`;
@@ -220,9 +290,9 @@
             img.src = historyItem.imageUrl;
             if (isTwoPhotos && historyItem.imageUrl2) {
                 img2.src = historyItem.imageUrl2;
-                displayTime(historyItem.dateTaken, historyItem.dateTaken2);
+                displayTime(historyItem.dateTaken, historyItem.dateTaken2, historyItem.weather);
             } else {
-                displayTime(historyItem.dateTaken);
+                displayTime(historyItem.dateTaken, undefined, historyItem.weather);
             }
 
             // Show/hide navigation arrows based on position
@@ -258,7 +328,8 @@
                             imageUrl: data1.message.image_url,
                             imageUrl2: data2.message.image_url,
                             dateTaken: data1.message.date_taken,
-                            dateTaken2: data2.message.date_taken
+                            dateTaken2: data2.message.date_taken,
+                            weather: data1.message.weather || data2.message.weather || null
                         };
 
                         imageHistory.push(newImage);
@@ -270,7 +341,7 @@
 
                         img.src = newImage.imageUrl;
                         img2.src = newImage.imageUrl2;
-                        displayTime(newImage.dateTaken, newImage.dateTaken2);
+                        displayTime(newImage.dateTaken, newImage.dateTaken2, newImage.weather);
 
                         updateNavigationControls();
                         leftArrow.classList.remove('nav-arrow-visible');
@@ -283,7 +354,8 @@
                     .then(data => {
                         const newImage = {
                             imageUrl: data.message.image_url,
-                            dateTaken: data.message.date_taken
+                            dateTaken: data.message.date_taken,
+                            weather: data.message.weather || null
                         };
 
                         imageHistory.push(newImage);
@@ -294,7 +366,7 @@
                         currentHistoryIndex = imageHistory.length - 1;
 
                         img.src = newImage.imageUrl;
-                        displayTime(newImage.dateTaken);
+                        displayTime(newImage.dateTaken, undefined, newImage.weather);
 
                         updateNavigationControls();
                         leftArrow.classList.remove('nav-arrow-visible');
@@ -306,7 +378,7 @@
 
         updateImage();
 
-        let updateInterval = queryParams.get('timing') === 'slow' || mode === 'clock' ? 60000 : 15000;
+        let updateInterval = queryParams.get('timing') === 'slow' || mode === 'clock' || isFrameMode ? 60000 : 15000;
         console.log(`Selected update interval: ${updateInterval}ms`);
 
         // Reset auto-advance timer
@@ -323,16 +395,67 @@
 
         let lastLabel = '';
         let lastLabel2 = '';
-        function displayTime(label, label2) {
+        let lastWeather = null;
+
+        function normalizeWeather(weather) {
+            if (!weather || typeof weather !== 'object') {
+                return null;
+            }
+
+            const rawTemperature = weather.temperature ?? weather.temp ?? weather.value;
+            const temperatureText = String(rawTemperature ?? '').trim();
+            const temperatureMatch = temperatureText.match(/^[+-]?\d+(?:\.\d+)?/);
+            const temperature = temperatureMatch ? Number.parseFloat(temperatureMatch[0]) : NaN;
+            const icon = typeof weather.icon === 'string' && /^[a-z0-9_]+$/.test(weather.icon)
+                ? weather.icon
+                : '';
+
+            return {
+                temperature: Number.isFinite(temperature) ? Math.round(temperature) : null,
+                icon
+            };
+        }
+
+        function renderFrameStatus(date, weather) {
+            const frameDateText = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const timeText = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+            const normalizedWeather = normalizeWeather(weather);
+
+            frameTime.textContent = timeText;
+            frameDate.textContent = frameDateText;
+            weatherIcon.textContent = normalizedWeather?.icon || '';
+            frameTemperature.textContent = normalizedWeather?.temperature !== null && normalizedWeather?.temperature !== undefined
+                ? `${normalizedWeather.temperature}°`
+                : '';
+        }
+
+        function renderFramePhotoDates() {
+            if (lastLabel2) {
+                clock.innerHTML = `<span class="banner-segment">${lastLabel}</span><span class="banner-segment">${lastLabel2}</span>`;
+            } else if (lastLabel.includes(' & ')) {
+                const parts = lastLabel.split(' & ');
+                clock.innerHTML = `<span class="banner-segment">${parts[0]}</span><span class="banner-segment">${parts[1]}</span>`;
+            } else {
+                clock.textContent = lastLabel;
+            }
+        }
+
+        function displayTime(label, label2, weather) {
             if (label !== undefined) {
                 lastLabel = label;
             }
             if (label2 !== undefined) {
                 lastLabel2 = label2;
             }
+            if (weather !== undefined) {
+                lastWeather = weather;
+            }
             const date = new Date();
             const time = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
-            if (mode === 'clock') {
+            if (isFrameMode) {
+                renderFramePhotoDates();
+                renderFrameStatus(date, lastWeather);
+            } else if (mode === 'clock') {
                 const day = date.toLocaleString('en-US', { weekday: 'short' });
                 const month = date.toLocaleString('en-US', { month: 'short' });
                 const dayOfMonth = date.getDate();
