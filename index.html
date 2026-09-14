@@ -93,10 +93,18 @@
 
         .frame-mode .clock {
             font-family: 'Roboto', Arial, sans-serif;
+            line-height: 1.2;
+            height: calc(32px + 3.6vh + env(safe-area-inset-bottom, 0px));
+            box-sizing: border-box;
         }
 
         .frame-mode.two-photos .clock {
             bottom: 7vh;
+        }
+
+        .frame-mode .banner-segment {
+            top: 50%;
+            transform: translate(-50%, -50%);
         }
 
         .frame-mode .banner-segment:nth-child(2) {
@@ -323,11 +331,86 @@
             }
         }
 
+        let retrievalCount = 0;
+        let lastRetrievalStartedAt = null;
+        let lastRetrievalCompletedAt = null;
+
+        function beginRetrieval() {
+            const startedAt = performance.now();
+            const retrieval = {
+                id: ++retrievalCount,
+                startedAt
+            };
+
+            console.log(`[slideshow] retrieval #${retrieval.id} started`, {
+                startedAt: new Date().toISOString(),
+                intervalSincePreviousStartMs: lastRetrievalStartedAt === null
+                    ? null
+                    : Math.round(startedAt - lastRetrievalStartedAt),
+                idleTimeSincePreviousCompletionMs: lastRetrievalCompletedAt === null
+                    ? null
+                    : Math.round(startedAt - lastRetrievalCompletedAt)
+            });
+
+            lastRetrievalStartedAt = startedAt;
+            return retrieval;
+        }
+
+        function fetchWithTiming(retrieval, photoNumber) {
+            const apiStartedAt = performance.now();
+
+            return fetch(apiUrl)
+                .then(response => {
+                    const responseMs = Math.round(performance.now() - apiStartedAt);
+                    console.log(`[slideshow] retrieval #${retrieval.id} photo ${photoNumber} API response`, {
+                        status: response.status,
+                        responseMs
+                    });
+
+                    return response.json().then(data => {
+                        console.log(`[slideshow] retrieval #${retrieval.id} photo ${photoNumber} API complete`, {
+                            totalApiMs: Math.round(performance.now() - apiStartedAt)
+                        });
+                        return data;
+                    });
+                })
+                .catch(error => {
+                    console.error(`[slideshow] retrieval #${retrieval.id} photo ${photoNumber} API failed`, {
+                        totalApiMs: Math.round(performance.now() - apiStartedAt),
+                        error
+                    });
+                    throw error;
+                });
+        }
+
+        function finishRetrieval(retrieval, apiBatchMs) {
+            const completedAt = performance.now();
+            lastRetrievalCompletedAt = completedAt;
+
+            console.log(`[slideshow] retrieval #${retrieval.id} ready`, {
+                totalRetrievalMs: Math.round(completedAt - retrieval.startedAt),
+                apiBatchMs: apiBatchMs === undefined
+                    ? null
+                    : Math.round(apiBatchMs),
+                completedAt: new Date().toISOString()
+            });
+        }
+
         function updateImage() {
+            const retrieval = beginRetrieval();
+
             if (isTwoPhotos) {
-                Promise.all([fetch(apiUrl), fetch(apiUrl)])
-                    .then(([res1, res2]) => Promise.all([res1.json(), res2.json()]))
+                const apiBatchStartedAt = performance.now();
+                Promise.all([
+                    fetchWithTiming(retrieval, 1),
+                    fetchWithTiming(retrieval, 2)
+                ])
                     .then(([data1, data2]) => {
+                        const apiBatchMs = performance.now() - apiBatchStartedAt;
+                        console.log(`[slideshow] retrieval #${retrieval.id} API batch complete`, {
+                            apiBatchMs: Math.round(apiBatchMs)
+                        });
+
                         const newImage = {
                             imageUrl: data1.message.image_url,
                             imageUrl2: data2.message.image_url,
@@ -350,11 +433,11 @@
                         updateNavigationControls();
                         leftArrow.classList.remove('nav-arrow-visible');
                         rightArrow.classList.remove('nav-arrow-visible');
+                        finishRetrieval(retrieval, apiBatchMs);
                     })
-                    .catch(error => console.error(error));
+                    .catch(error => console.error(`[slideshow] retrieval #${retrieval.id} failed`, error));
             } else {
-                fetch(apiUrl)
-                    .then(response => response.json())
+                fetchWithTiming(retrieval, 1)
                     .then(data => {
                         const newImage = {
                             imageUrl: data.message.image_url,
@@ -375,8 +458,9 @@
                         updateNavigationControls();
                         leftArrow.classList.remove('nav-arrow-visible');
                         rightArrow.classList.remove('nav-arrow-visible');
+                        finishRetrieval(retrieval);
                     })
-                    .catch(error => console.error(error));
+                    .catch(error => console.error(`[slideshow] retrieval #${retrieval.id} failed`, error));
             }
         }
 
