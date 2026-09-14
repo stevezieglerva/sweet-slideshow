@@ -497,7 +497,7 @@
             const temperature = temperatureMatch ? Number.parseFloat(temperatureMatch[0]) : NaN;
             const icon = typeof weather.icon === 'string'
                 && /^[a-z0-9_]+$/.test(weather.icon)
-                && !['help', 'help_outline', 'question_mark'].includes(weather.icon)
+                && !['help_outline', 'question_mark'].includes(weather.icon)
                 ? weather.icon
                 : '';
 
@@ -511,6 +511,10 @@
             const hour = date.getHours();
             const isNight = hour >= 22 || hour < 6;
             const daylightIcons = new Set(['sunny', 'partly_cloudy_day']);
+
+            if (icon === 'help') {
+                return isNight ? 'dark_mode' : '';
+            }
 
             return isNight && daylightIcons.has(icon) ? 'dark_mode' : icon;
         }
