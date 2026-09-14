@@ -507,15 +507,24 @@
             };
         }
 
+        function frameWeatherIcon(icon, date) {
+            const hour = date.getHours();
+            const isNight = hour >= 22 || hour < 6;
+            const daylightIcons = new Set(['sunny', 'partly_cloudy_day']);
+
+            return isNight && daylightIcons.has(icon) ? 'dark_mode' : icon;
+        }
+
         function renderFrameStatus(date, weather) {
             const frameDateText = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
             const timeText = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
             const normalizedWeather = normalizeWeather(weather);
+            const icon = normalizedWeather ? frameWeatherIcon(normalizedWeather.icon, date) : '';
 
             frameTime.textContent = timeText;
             frameDate.textContent = frameDateText;
-            weatherIcon.textContent = normalizedWeather?.icon || '';
-            weatherIcon.hidden = !normalizedWeather?.icon;
+            weatherIcon.textContent = icon;
+            weatherIcon.hidden = !icon;
             frameTemperature.textContent = normalizedWeather?.temperature !== null && normalizedWeather?.temperature !== undefined
                 ? `${normalizedWeather.temperature}°`
                 : '';
