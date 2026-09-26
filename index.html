@@ -519,6 +519,21 @@
             return isNight && daylightIcons.has(icon) ? 'dark_mode' : icon;
         }
 
+        function weatherIconColor(icon) {
+            const colors = {
+                thunderstorm: 'gold',
+                rainy: 'darkblue',
+                ac_unit: 'blue',
+                foggy: 'gray',
+                partly_cloudy_day: 'gray',
+                cloud: 'darkgray',
+                sunny: 'yellow',
+                emergency_heat: 'orange'
+            };
+
+            return colors[icon] || '';
+        }
+
         function renderFrameStatus(date, weather) {
             const frameDateText = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
             const timeText = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
@@ -528,6 +543,7 @@
             frameTime.textContent = timeText;
             frameDate.textContent = frameDateText;
             weatherIcon.textContent = icon;
+            weatherIcon.style.color = weatherIconColor(normalizedWeather?.icon);
             weatherIcon.hidden = !icon;
             frameTemperature.textContent = normalizedWeather?.temperature !== null && normalizedWeather?.temperature !== undefined
                 ? `${normalizedWeather.temperature}°`
