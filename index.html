@@ -92,14 +92,6 @@
             font-variation-settings: 'FILL' 1, 'wght' 700, 'GRAD' 0, 'opsz' 32;
         }
 
-        .weather-icon.partly-cloudy {
-            color: #ffeb3b;
-        }
-
-        .weather-icon.thunderstorm {
-            color: #64b5f6;
-        }
-
         .frame-mode .clock {
             font-family: 'Roboto', Arial, sans-serif;
             line-height: 1.2;
@@ -529,11 +521,11 @@
 
         function weatherIconColor(icon) {
             const colors = {
-                thunderstorm: 'gold',
+                thunderstorm: '#64b5f6',
                 rainy: 'darkblue',
                 ac_unit: 'blue',
                 foggy: 'gray',
-                partly_cloudy_day: 'gray',
+                partly_cloudy_day: '#ffeb3b',
                 cloud: 'darkgray',
                 sunny: 'yellow',
                 emergency_heat: 'orange'
@@ -553,8 +545,6 @@
             weatherIcon.textContent = icon;
             weatherIcon.style.color = weatherIconColor(normalizedWeather?.icon);
             weatherIcon.hidden = !icon;
-            weatherIcon.classList.toggle('partly-cloudy', normalizedWeather?.icon.startsWith('partly_cloudy') ?? false);
-            weatherIcon.classList.toggle('thunderstorm', normalizedWeather?.icon === 'thunderstorm');
             frameTemperature.textContent = normalizedWeather?.temperature !== null && normalizedWeather?.temperature !== undefined
                 ? `${normalizedWeather.temperature}°`
                 : '';
