@@ -20,7 +20,8 @@ Weather icon colors are assigned inline by `weatherIcon.style.color` in
 `index.html`. To change a condition's color, update its entry in the
 `weatherIconColor()` mapping. A regular CSS `color` rule for a weather icon
 class will not override that inline style, so changing or adding a CSS class
-color alone will have no visible effect.
+color alone will have no visible effect. The mapping receives the rendered
+icon token, so the `dark_mode` entry controls the moon color.
 
 ## Night icon timing
 

@@ -646,6 +646,7 @@
 
         function weatherIconColor(icon) {
             const colors = {
+                dark_mode: '#ffeb3b',
                 thunderstorm: '#64b5f6',
                 rainy: 'darkblue',
                 ac_unit: 'blue',
@@ -668,7 +669,7 @@
             frameTime.textContent = timeText;
             frameDate.textContent = frameDateText;
             weatherIcon.textContent = icon;
-            weatherIcon.style.color = weatherIconColor(normalizedWeather?.icon);
+            weatherIcon.style.color = weatherIconColor(icon);
             weatherIcon.hidden = !icon;
             frameTemperature.textContent = normalizedWeather?.temperature !== null && normalizedWeather?.temperature !== undefined
                 ? `${normalizedWeather.temperature}°`
