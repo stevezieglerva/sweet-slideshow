@@ -507,9 +507,134 @@
             };
         }
 
+        const APEX_TIME_ZONE = 'America/New_York';
+        const APEX_ZIP_CENTROID = { latitude: 35.712, longitude: -78.82 };
+        const NOAA_SOLAR_RETRY_MS = 5 * 60 * 1000;
+        const noaaSolarTablesByYear = new Map();
+        const noaaSolarTableRequests = new Map();
+        const noaaSolarTableAttemptedAt = new Map();
+
+        function apexDateParts(date) {
+            const parts = new Intl.DateTimeFormat('en-US', {
+                timeZone: APEX_TIME_ZONE,
+                year: 'numeric',
+                month: 'numeric',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: 'numeric',
+                hourCycle: 'h23'
+            }).formatToParts(date);
+
+            return Object.fromEntries(parts.map(({ type, value }) => [type, Number(value)]));
+        }
+
+        function noaaTableAfterHeading(document, headingPrefix) {
+            const heading = [...document.querySelectorAll('h2')]
+                .find(element => element.textContent.trim().startsWith(headingPrefix));
+            let section = heading?.parentElement;
+
+            while (section) {
+                const table = section.querySelector('table');
+                if (table) {
+                    return table;
+                }
+
+                section = section.nextElementSibling;
+                if (section?.querySelector('h2')) {
+                    return null;
+                }
+            }
+
+            return null;
+        }
+
+        function noaaTableMinutes(table, month, day) {
+            const row = [...table.rows]
+                .find(candidate => Number(candidate.cells[0]?.textContent.trim()) === day);
+            const time = row?.cells[month]?.textContent.trim().match(/^(\d{1,2}):(\d{2})$/);
+
+            return time ? Number(time[1]) * 60 + Number(time[2]) : null;
+        }
+
+        function requestNoaaSolarTables(year) {
+            const url = new URL('https://gml.noaa.gov/grad/solcalc/table.php');
+            url.search = new URLSearchParams({
+                lat: String(APEX_ZIP_CENTROID.latitude),
+                lon: String(APEX_ZIP_CENTROID.longitude),
+                year: String(year)
+            }).toString();
+
+            return fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`NOAA solar table returned HTTP ${response.status}`);
+                    }
+                    return response.text();
+                })
+                .then(html => parseNoaaSolarTables(html, year));
+        }
+
+        function parseNoaaSolarTables(html, year) {
+            const document = new DOMParser().parseFromString(html, 'text/html');
+            const sunrise = noaaTableAfterHeading(document, `Sunrise Table for ${year}`);
+            const sunset = noaaTableAfterHeading(document, `Sunset Table for ${year}`);
+
+            if (!sunrise || !sunset) {
+                throw new Error('NOAA solar tables were not found in the page');
+            }
+
+            return { sunrise, sunset };
+        }
+
+        function publishNoaaSolarTables(year, tables) {
+            noaaSolarTablesByYear.set(year, tables);
+            if (apexDateParts(new Date()).year === year && isFrameMode) {
+                renderFrameStatus(new Date(), lastWeather);
+            }
+        }
+
+        function loadNoaaSolarTables(year) {
+            if (noaaSolarTablesByYear.has(year) || noaaSolarTableRequests.has(year)) {
+                return;
+            }
+
+            const lastAttempt = noaaSolarTableAttemptedAt.get(year) || 0;
+            if (Date.now() - lastAttempt < NOAA_SOLAR_RETRY_MS) {
+                return;
+            }
+            noaaSolarTableAttemptedAt.set(year, Date.now());
+
+            const request = requestNoaaSolarTables(year)
+                .then(tables => publishNoaaSolarTables(year, tables))
+                .catch(error => {
+                    console.warn('[weather] NOAA solar table unavailable; using fixed night hours', error);
+                })
+                .finally(() => noaaSolarTableRequests.delete(year));
+
+            noaaSolarTableRequests.set(year, request);
+        }
+
+        function isApexNight(date) {
+            const parts = apexDateParts(date);
+            const tables = noaaSolarTablesByYear.get(parts.year);
+
+            if (!tables) {
+                loadNoaaSolarTables(parts.year);
+                return parts.hour >= 22 || parts.hour < 6;
+            }
+
+            const sunrise = noaaTableMinutes(tables.sunrise, parts.month, parts.day);
+            const sunset = noaaTableMinutes(tables.sunset, parts.month, parts.day);
+            if (sunrise === null || sunset === null) {
+                return parts.hour >= 22 || parts.hour < 6;
+            }
+
+            const currentMinute = parts.hour * 60 + parts.minute;
+            return currentMinute < sunrise || currentMinute >= sunset;
+        }
+
         function frameWeatherIcon(icon, date) {
-            const hour = date.getHours();
-            const isNight = hour >= 22 || hour < 6;
+            const isNight = isApexNight(date);
             const daylightIcons = new Set(['sunny', 'partly_cloudy_day']);
 
             if (icon === 'help') {
@@ -589,6 +714,10 @@
                 clock.textContent = lastLabel + " | " + time;
             }
         }
+        if (isFrameMode) {
+            loadNoaaSolarTables(apexDateParts(new Date()).year);
+        }
+
         displayTime();
         setInterval(displayTime, 60000);
 

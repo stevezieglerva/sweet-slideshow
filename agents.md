@@ -21,3 +21,12 @@ Weather icon colors are assigned inline by `weatherIcon.style.color` in
 `weatherIconColor()` mapping. A regular CSS `color` rule for a weather icon
 class will not override that inline style, so changing or adding a CSS class
 color alone will have no visible effect.
+
+## Night icon timing
+
+Frame mode gets sunrise and sunset from NOAA's annual solar table through an
+HTTP GET and scrapes the current day's row. Update `APEX_ZIP_CENTROID` and
+`APEX_TIME_ZONE` in `index.html` together if the display location changes. If
+the page request or scrape fails, night mode falls back to 10 p.m.–6 a.m.
+NOAA returns HTML rather than a stable JSON contract, so update
+`noaaTableAfterHeading()` or `noaaTableMinutes()` if its page layout changes.
