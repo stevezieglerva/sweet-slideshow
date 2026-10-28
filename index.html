@@ -228,7 +228,7 @@
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
         const queryParams = new URLSearchParams(window.location.search);
-        const apiKey = queryParams.get('apiKey') || '';
+        const apiKey = queryParams.get('apiKey') || queryParams.get('apikey') || '';
         const mode = queryParams.get('mode');
         const photoCount = parseInt(queryParams.get('photos') || '1', 10);
         const isTwoPhotos = photoCount === 2;
